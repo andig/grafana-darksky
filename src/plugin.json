@@ -1,0 +1,40 @@
+{
+  "name": "Forecast.io",
+  "id": "grafana-darksky",
+  "type": "datasource",
+
+  "metrics": true,
+  "annotations": false,
+
+  "routes": [
+    {
+      "path": "darksky",
+      "method": "GET",
+      "url": "https://api.darksky.net/forecast"
+    }
+  ],
+
+  "info": {
+    "description": "Forecast.io datasource",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "keywords": ["weather","forecast","forecast.io","dark sky"],
+    "logos": {
+      "small": "img/simpleJson_logo.svg",
+      "large": "img/simpleJson_logo.svg"
+    },
+    "links": [
+      {"name": "GitHub", "url": "https://github.com/andig/grafana-darksky"},
+      {"name": "MIT License", "url": "https://github.com/andig/grafana-darksky/blob/master/LICENSE"}
+    ],
+    "version": "1.0.0",
+    "updated": "2018-06-20"
+  },
+
+  "dependencies": {
+    "grafanaVersion": "3.x.x",
+    "plugins": [ ]
+  }
+}
