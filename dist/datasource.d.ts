@@ -8,6 +8,16 @@ export declare class DarkSkyDatasource {
     url: string;
     constructor(instanceSettings: any, backendSrv: any, templateSrv: any, $q: any);
     query(options: any): any;
+    tableResponse(targets: any, data: any): {
+        data: {
+            "type": string;
+            columns: any[];
+            rows: any[];
+        }[];
+    };
+    queryResponse(targets: any, data: any): {
+        data: any[];
+    };
     testDatasource(): any;
     annotationQuery(options: any): any[];
     metricFindQuery(query: any): {

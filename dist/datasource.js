@@ -16,16 +16,14 @@ System.register(["lodash"], function(exports_1) {
                     console.log(instanceSettings);
                     this.type = instanceSettings.type;
                     this.name = instanceSettings.name;
-                    this.url = "/api/datasources/proxy/" + instanceSettings.id + "/darksky/" + instanceSettings.jsonData.apikey + "/" + instanceSettings.jsonData.lat + "," + instanceSettings.jsonData.lon;
+                    this.url = "/api/datasources/proxy/" + instanceSettings.id + "/darksky/" + instanceSettings.jsonData.apikey + "/" + instanceSettings.jsonData.lat + "," + instanceSettings.jsonData.lon + "?units=si";
                     this.units = instanceSettings.units;
                 }
                 DarkSkyDatasource.prototype.query = function (options) {
+                    var _this = this;
                     var query = this.buildQueryParameters(options);
                     query.targets = query.targets.filter(function (t) { return !t.hide; });
                     if (query.targets.length <= 0) {
-                        console.log("empty");
-                        console.log(this.$q);
-                        console.log(this.$q.when({ data: [] }));
                         return this.$q.when({ data: [] });
                     }
                     if (this.templateSrv.getAdhocFilters) {
@@ -41,14 +39,76 @@ System.register(["lodash"], function(exports_1) {
                         data: query,
                         method: 'GET'
                     }).then(function (res) {
-                        console.log("query");
                         console.log(res);
-                        return res;
+                        return _this.tableResponse(query.targets, res);
                     });
                 };
+                DarkSkyDatasource.prototype.tableResponse = function (targets, data) {
+                    var targetName = targets[0].target;
+                    var slice = data.data[targetName];
+                    if (targetName == 'currently') {
+                        // normalize 'currently' into data: array
+                        slice = {
+                            data: [lodash_1.default.clone(slice)]
+                        };
+                    }
+                    console.log("slice");
+                    console.log(slice);
+                    var res = {
+                        "type": "table",
+                        columns: [],
+                        rows: []
+                    };
+                    if (slice.data.length) {
+                        // extract columns
+                        res.columns = lodash_1.default.map(slice.data[0], function (v, k) {
+                            console.log(k + "," + v);
+                            var col = {
+                                text: k,
+                                type: typeof (v) === 'string' ? 'string' : 'number'
+                            };
+                            if (k.match(/[Tt]ime/)) {
+                                col.type = 'time';
+                            }
+                            return col;
+                        });
+                        // extract rows
+                        console.log("slice.data");
+                        console.log(slice.data);
+                        res.rows = lodash_1.default.map(slice.data, function (row) {
+                            return lodash_1.default.map(res.columns, function (col) {
+                                if (row[col.text] === undefined)
+                                    return null;
+                                // time to millisec
+                                return col.type == 'time' ? row[col.text] * 1000 : row[col.text];
+                            });
+                        });
+                        console.log("table");
+                        console.log(res);
+                    }
+                    // return res;
+                    return {
+                        data: [res]
+                    };
+                };
+                DarkSkyDatasource.prototype.queryResponse = function (targets, data) {
+                    var res = {
+                        data: []
+                    };
+                    res.data = lodash_1.default.map(targets, function (target) {
+                        var slice = data.data[target.target]; // currently...
+                        console.log(slice);
+                        var sliceData = {
+                            target: target.target,
+                            datapoints: lodash_1.default.map(slice.data, function (d, i) {
+                                return [d.temperatureLow, d.time * 1000];
+                            }),
+                        };
+                        return sliceData;
+                    });
+                    return res;
+                };
                 DarkSkyDatasource.prototype.testDatasource = function () {
-                    console.log("testDatasource");
-                    console.log(this.url);
                     return this.doRequest({
                         url: this.url,
                         method: 'GET',
