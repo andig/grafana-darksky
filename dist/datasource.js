@@ -17,7 +17,7 @@ System.register(["lodash"], function(exports_1) {
                     this.type = instanceSettings.type;
                     this.name = instanceSettings.name;
                     var apiUrl = lodash_1.default.filter(instanceSettings.meta.routes, { path: 'darksky' })[0].url;
-                    var credentials = instanceSettings.jsonData.apikey + "/" + instanceSettings.jsonData.lat + "," + instanceSettings.jsonData.lon + "?units=" + instanceSettings.jsonData.unit;
+                    var credentials = instanceSettings.jsonData.apikey + "/" + instanceSettings.jsonData.lat + "," + instanceSettings.jsonData.lon + "?units=" + instanceSettings.jsonData.unit + "&lang=" + instanceSettings.jsonData.language;
                     this.darkSky = apiUrl + "/" + credentials;
                     this.url = "/api/datasources/proxy/" + instanceSettings.id + "/darksky/" + credentials;
                     this.units = instanceSettings.units;

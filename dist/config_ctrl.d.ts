@@ -3,6 +3,7 @@ export declare class DarkSkyConfigCtrl {
     static templateUrl: string;
     current: any;
     private units;
+    private languages;
     /** @ngInject */
     constructor($scope: any);
 }

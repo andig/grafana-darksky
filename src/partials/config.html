@@ -11,12 +11,6 @@
 			<span class="gf-form-label width-9">API key</span>
 			<input class="gf-form-input" type="text" ng-model='ctrl.current.jsonData.apikey' placeholder="" required></input>
 		</div>
-		<div class="gf-form max-width-25">
-			<span class="gf-form-label width-9">Units</span>
-			<span class="gf-form-select-wrapper">
-				<select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.unit" ng-options="f.value as f.name for f in ctrl.units"></select>
-			</span>
-		</div>
 	</div>
 	<div class="gf-form-inline">
 		<div class="gf-form max-width-25">
@@ -26,6 +20,20 @@
 		<div class="gf-form max-width-25">
 			<span class="gf-form-label width-9">Longitude</span>
 			<input class="gf-form-input" type="text" ng-model='ctrl.current.jsonData.lon' placeholder="" required></input>
+		</div>
+	</div>
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-25">
+			<span class="gf-form-label width-9">Language</span>
+			<span class="gf-form-select-wrapper">
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.language" ng-options="f.value as f.name for f in ctrl.languages"></select>
+			</span>
+		</div>
+		<div class="gf-form max-width-25">
+			<span class="gf-form-label width-9">Units</span>
+			<span class="gf-form-select-wrapper">
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.unit" ng-options="f.value as f.name for f in ctrl.units"></select>
+			</span>
 		</div>
 	</div>
 </div>
