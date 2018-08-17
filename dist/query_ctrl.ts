@@ -3,25 +3,22 @@ import './css/query-editor.css!'
 
 export class DarkSkyQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
-  scope: any;
+  private types: any;
 
   constructor($scope, $injector, private templateSrv)  {
     super($scope, $injector);
 
-    this.scope = $scope;
+    this.types = [{ text: 'Time series', value: 'timeseries' }, { text: 'Table', value: 'table' }];
+
     this.target.target = this.target.target || 'select metric';
-    this.target.type = this.target.type || 'timeserie';
+    this.target.type = this.target.type || ((this.panelCtrl.panel.type === 'table') ? 'table' : 'timeseries');
   }
 
   getOptions(query) {
-    return this.datasource.metricFindQuery(query || '');
+    return this.datasource.metricFindQuery(this.target.type);
   }
 
-  toggleEditorMode() {
-    this.target.rawQuery = !this.target.rawQuery;
-  }
-
-  onChangeInternal() {
+  refresh() {
     this.panelCtrl.refresh(); // Asks the panel to refresh data.
   }
 }

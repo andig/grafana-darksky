@@ -1,8 +1,7 @@
 {
   "name": "grafana-darksky",
-  "private": true,
   "version": "1.0.0",
-  "description": "",
+  "description": "Grafana weather forecast datasource",
   "main": "index.js",
   "scripts": {
     "build": "./node_modules/grunt-cli/bin/grunt",
@@ -22,11 +21,7 @@
   },
   "engineStrict": true,
   "dependencies": {
-    "lodash": "^4.17.4",
-    "moment": "^2.18.1",
-    "q": "^1.5.0",
-    "systemjs": "^0.19.47",
-    "typescript": "^3.0.1"
+    "lodash": "^4.17.4"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.74",
@@ -38,8 +33,12 @@
     "grunt-string-replace": "^1.3",
     "grunt-typescript": "^0.8.0",
     "load-grunt-tasks": "^3.5.2",
+    "typescript": "^3.0.1",
     "plugin-typescript": "^7.1.0",
-    "systemjs-plugin-css": "^0.1.35"
+    "systemjs-plugin-css": "^0.1.35",
+    "moment": "^2.18.1",
+    "q": "^1.5.0",
+    "systemjs": "^0.19.47"
   },
   "homepage": "https://github.com/andig/grafana-darksky#readme"
 }

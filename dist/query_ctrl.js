@@ -18,17 +18,14 @@ System.register(['app/plugins/sdk', './css/query-editor.css!'], function(exports
                 function DarkSkyQueryCtrl($scope, $injector, templateSrv) {
                     _super.call(this, $scope, $injector);
                     this.templateSrv = templateSrv;
-                    this.scope = $scope;
+                    this.types = [{ text: 'Time series', value: 'timeseries' }, { text: 'Table', value: 'table' }];
                     this.target.target = this.target.target || 'select metric';
-                    this.target.type = this.target.type || 'timeserie';
+                    this.target.type = this.target.type || ((this.panelCtrl.panel.type === 'table') ? 'table' : 'timeseries');
                 }
                 DarkSkyQueryCtrl.prototype.getOptions = function (query) {
-                    return this.datasource.metricFindQuery(query || '');
+                    return this.datasource.metricFindQuery(this.target.type);
                 };
-                DarkSkyQueryCtrl.prototype.toggleEditorMode = function () {
-                    this.target.rawQuery = !this.target.rawQuery;
-                };
-                DarkSkyQueryCtrl.prototype.onChangeInternal = function () {
+                DarkSkyQueryCtrl.prototype.refresh = function () {
                     this.panelCtrl.refresh(); // Asks the panel to refresh data.
                 };
                 DarkSkyQueryCtrl.templateUrl = 'partials/query.editor.html';

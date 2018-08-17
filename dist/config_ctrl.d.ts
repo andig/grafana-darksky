@@ -2,10 +2,7 @@
 export declare class DarkSkyConfigCtrl {
     static templateUrl: string;
     current: any;
+    private units;
     /** @ngInject */
     constructor($scope: any);
-    unitOptions: {
-        name: string;
-        value: string;
-    }[];
 }

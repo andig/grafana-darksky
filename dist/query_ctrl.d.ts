@@ -2,9 +2,8 @@ import { QueryCtrl } from 'app/plugins/sdk';
 export declare class DarkSkyQueryCtrl extends QueryCtrl {
     private templateSrv;
     static templateUrl: string;
-    scope: any;
+    private types;
     constructor($scope: any, $injector: any, templateSrv: any);
     getOptions(query: any): any;
-    toggleEditorMode(): void;
-    onChangeInternal(): void;
+    refresh(): void;
 }

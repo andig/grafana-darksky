@@ -5,6 +5,7 @@ export class DarkSkyDatasource {
   type: string;
   name: string;
   units: string;
+  darkSky: string;
   url: string;
 
   constructor(instanceSettings, private backendSrv, private templateSrv, private $q) {
@@ -14,8 +15,57 @@ export class DarkSkyDatasource {
     this.type = instanceSettings.type;
     this.name = instanceSettings.name;
 
-    this.url = `/api/datasources/proxy/${instanceSettings.id}/darksky/${instanceSettings.jsonData.apikey}/${instanceSettings.jsonData.lat},${instanceSettings.jsonData.lon}?units=si`;
+    var apiUrl = _.filter(instanceSettings.meta.routes, { path: 'darksky' })[0].url;
+    var credentials = `${instanceSettings.jsonData.apikey}/${instanceSettings.jsonData.lat},${instanceSettings.jsonData.lon}?units=${instanceSettings.jsonData.unit}`;
+    this.darkSky = `${apiUrl}/${credentials}`;
+    this.url = `/api/datasources/proxy/${instanceSettings.id}/darksky/${credentials}`;
     this.units = instanceSettings.units;
+  }
+
+  metricFindQuery(query) {
+    // console.log("metricFindQuery");
+    // console.log(query);
+    const timeframes = ['currently', 'minutely', 'hourly', 'daily'];
+
+    // metrics for table
+    if (query == 'table') {
+      return _.map(timeframes, timeframe => {
+        return { text: timeframe, value: timeframe };
+      });
+    }
+
+    // metrics for timeseries
+    return this.doRequest({
+      url: this.url,
+      data: query,
+      method: 'GET'
+    }).then(res => {
+      var metrics = [];
+
+      // get all properties from forecast query
+      _.each(timeframes, key => {
+        var props = res.data[key];
+        if (props && _.isArray(props.data)) {
+          props = props.data.length ? props.data[0] : {};
+        }
+        metrics.push(..._.filter(_.keys(props), key => {
+          return key != "time"
+        }));
+      });
+
+      // create metrics as properties x timeframes
+      var metricsByTime = [];
+     _.each(_.uniq(_.sortBy(metrics)), el => {
+        var s = _.map(timeframes, timeframe => {
+          return { text: `${el} (${timeframe})`, value: `${timeframe}.${el}` };
+        });
+        // console.log(s);
+        metricsByTime.push(...s);
+        return s;
+      });
+
+      return metricsByTime;
+    });
   }
 
   query(options) {
@@ -32,99 +82,84 @@ export class DarkSkyDatasource {
       query.adhocFilters = [];
     }
 
-    console.log("query");
-    console.log(query);
+    console.log(this.darkSky);
 
     return this.doRequest({
       url: this.url,
       data: query,
       method: 'GET'
     }).then(res => {
-      console.log(res);
-      return this.tableResponse(query.targets, res);
+      // table query?
+      if (_.filter(query.targets, { type: 'table' }).length) {
+        return this.tableResponse(query.targets, res);
+      }
+      else {
+        return this.timeseriesResponse(query.targets, res);
+      }
     });
   }
 
   tableResponse(targets, data) {
-    var targetName = targets[0].target;
-    var slice = data.data[targetName];
+    // console.log("tableResponse");
 
-    if (targetName == 'currently') {
-      // normalize 'currently' into data: array
+    // use first metric for table query
+    let timeframe = targets[0].target;
+    var slice = data.data[timeframe];
+
+    // normalize 'currently' into data: array
+    if (timeframe == 'currently') {
       slice = {
         data: [_.clone(slice)]
       }
     }
 
-    console.log("slice");
-    console.log(slice);
-
-    var res = {
-      "type": "table",
-      columns: [],
-      rows: []
-    };
-
+    var columns = [], rows = [];
 
     if (slice.data.length) {
       // extract columns
-      res.columns = _.map(slice.data[0], (v,k) => {
-        console.log(k+","+v);
-
-        var col = {
+      columns = _.map(slice.data[0], (v,k) => {
+        return {
           text: k,
-          type: typeof(v) === 'string' ? 'string' : 'number'
-        }
-
-        if (k.match(/[Tt]ime/)) {
-          col.type = 'time';
-        }
-
-        return col;
+          type: (k.match(/[Tt]ime/)) ? 'time' : (typeof (v) === 'string' ? 'string' : 'number')
+        };
       });
 
       // extract rows
-      console.log("slice.data");
-      console.log(slice.data);
-      res.rows = _.map(slice.data, row => {
-        return _.map(res.columns, col => {
+      rows = _.map(slice.data, row => {
+        return _.map(columns, col => {
           if (row[col.text] === undefined) return null;
 
           // time to millisec
           return col.type == 'time' ? row[col.text] * 1000 : row[col.text];
         })
       });
-
-      console.log("table");
-      console.log(res);
     }
 
     // return res;
     return {
-      data: [res]
+      data: [{
+        type: "table",
+        columns: columns,
+        rows: rows,
+      }]
     };
   }
 
-  queryResponse(targets, data) {
+  timeseriesResponse(targets, data) {
+    // console.log("timeseriesResponse");
     var res = {
-      data: []
-    };
+      data: _.map(targets, target => {
+        let [timeframe, metric] = target.target.split('.');
+        var slice = data.data[timeframe]; // currently...
 
-
-    res.data = _.map(targets, target => {
-      var slice = data.data[target.target]; // currently...
-
-      console.log(slice);
-
-      var sliceData = {
-        target: target.target,
-        datapoints: _.map(slice.data, (d, i) => {
-          return [d.temperatureLow, d.time*1000];
-        }),
-      };
-
-      return sliceData;
-    });
+        return {
+          target: target.target,
+          datapoints: _.map(slice.data, d => {
+            return [d[metric], d.time*1000];
+          }),
+        };
+      })
+    }
 
     return res;
   }
@@ -144,17 +179,7 @@ export class DarkSkyDatasource {
     return [];
   }
 
-  metricFindQuery(query) {
-    return [
-      { text: 'currently', value: 'currently' },
-      { text: 'hourly', value: 'hourly' },
-      { text: 'daily', value: 'daily' },
-    ];
-  }
-
   doRequest(options) {
-    // options.withCredentials = this.withCredentials;
-    // options.headers = this.headers;
     return this.backendSrv.datasourceRequest(options);
   }
 
@@ -169,7 +194,7 @@ export class DarkSkyDatasource {
         target: this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
         refId: target.refId,
         hide: target.hide,
-        type: target.type || 'timeserie'
+        type: target.type
       };
     });
 
