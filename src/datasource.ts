@@ -4,8 +4,8 @@ export class DarkSkyDatasource {
 
   type: string;
   name: string;
-  units: string;
-  darkSky: string;
+  // darkSky: string;
+  apiOptions: string;
   url: string;
 
   /** @ngInject **/
@@ -16,24 +16,15 @@ export class DarkSkyDatasource {
     this.type = instanceSettings.type;
     this.name = instanceSettings.name;
 
-    var apiUrl = (_.filter(instanceSettings.meta.routes, { path: 'darksky' })[0] as any).url;
-    var credentials = `${instanceSettings.jsonData.apikey}/${instanceSettings.jsonData.lat},${instanceSettings.jsonData.lon}?units=${instanceSettings.jsonData.unit}&lang=${instanceSettings.jsonData.language}`;
-    this.darkSky = `${apiUrl}/${credentials}`;
+    var credentials = `${instanceSettings.jsonData.apikey}/${instanceSettings.jsonData.lat},${instanceSettings.jsonData.lon}`;
+    // var apiUrl = (_.filter(instanceSettings.meta.routes, { path: 'darksky' })[0] as any).url;
+    // this.darkSky = `${apiUrl}/${credentials}`;
+    this.apiOptions = `units=${instanceSettings.jsonData.unit}&lang=${instanceSettings.jsonData.language}`;
     this.url = `/api/datasources/proxy/${instanceSettings.id}/darksky/${credentials}`;
-    this.units = instanceSettings.units;
   }
 
   metricFindQuery(query) {
-    // console.log("metricFindQuery");
-    // console.log(query);
     const timeframes = ['currently', 'minutely', 'hourly', 'daily'];
-
-    // metrics for table
-    if (query == 'table') {
-      return _.map(timeframes, timeframe => {
-        return { text: timeframe, value: timeframe };
-      });
-    }
 
     // metrics for timeseries
     return this.doRequest({
@@ -55,18 +46,12 @@ export class DarkSkyDatasource {
         metrics.push(...keys);
       });
 
-      // create metrics as properties x timeframes
-      let metricsByTime: {text:string, value:string}[] = [];
-     _.each(_.uniq(_.sortBy(metrics)), el => {
-        var s = _.map(timeframes, timeframe => {
-          return { text: `${el} (${timeframe})`, value: `${timeframe}.${el}` };
-        });
-        // console.log(s);
-        metricsByTime.push(...s);
-        return s;
+      return _.map(_.uniq(_.sortBy(metrics)), metric => {
+        return {
+          text: metric,
+          value: metric
+        };
       });
-
-      return metricsByTime;
     });
   }
 
@@ -84,43 +69,82 @@ export class DarkSkyDatasource {
       query.adhocFilters = [];
     }
 
-    console.log(this.darkSky);
+    console.log("query");
+    console.log(query);
 
-    return this.doRequest({
-      url: this.url,
-      data: query,
-      method: 'GET'
-    }).then(res => {
+    let apiCalls = this.getApiCalls(query.range);
+    // console.log("apiCalls");
+    // console.log(apiCalls);
+
+    let requests = _.map(apiCalls.timestamps, ts => {
+      return this.doRequest({
+        url: `${this.url},${ts}?${this.apiOptions}`,
+        data: query,
+        method: 'GET'
+      });
+    });
+
+    return Promise.all(requests).then(response => {
+      let data: any[] = [];
+      _.each(response, res => {
+        if (apiCalls.dataset == 'currently') {
+          data.push(res.data.currently);
+        }
+        else {
+          // select timestamps inside query range
+          let filtered = _.filter(res.data[apiCalls.dataset].data, res => {
+            let timeMS = res.time * 1000;
+            return timeMS >= query.range.from && timeMS <= query.range.to;
+          });
+          // sort by timestamp
+          data.push(...filtered);
+        }
+      });
+      
+      data = _.sortBy(data, 'time')
+
       // table query?
-      if (_.filter(query.targets, { type: 'table' }).length) {
-        return this.tableResponse(query.targets, res);
-      }
-      else {
-        return this.timeseriesResponse(query.targets, res);
-      }
+      return (_.filter(query.targets, { type: 'table' }).length) 
+        ? this.tableResponse(query.targets, data)
+        : this.timeseriesResponse(query.targets, data);
     });
   }
 
-  tableResponse(targets, data) {
-    // console.log("tableResponse");
+  getApiCalls(range) {
+    let dataset = 'hourly';
+    let hours = range.to.diff(range.from, 'hours');
+    let date = range.from.clone().startOf('day');
+    let timestamps: any[] = [date.unix()];
 
+    // not same day?
+    if (range.to.date() !== range.from.date()) {
+      if (hours > 7 * 24) { // daily queries - daily
+        dataset = 'daily';
+      };
+
+      // create one timestamp per additional day
+      do {
+        date.add(1, 'day');
+        timestamps.push(date.unix());
+      } while (date.isBefore(range.to));
+    }
+
+    return {
+      dataset: dataset,
+      timestamps: timestamps,
+    }
+  }
+
+  tableResponse(targets, data) {
     // use first metric for table query
     let timeframe = targets[0].target;
-    var slice = data.data[timeframe];
-
-    // normalize 'currently' into data: array
-    if (timeframe == 'currently') {
-      slice = {
-        data: [_.clone(slice)]
-      }
-    }
 
     let columns: { text: string, type: string }[] = [];
     let rows: any[] = [];
 
-    if (slice.data.length) {
+    if (data.length) {
       // extract columns
-      columns = _.map(slice.data[0], (v,k) => {
+      columns = _.map(data[0], (v,k) => {
         return {
           text: k,
           type: (k.match(/[Tt]ime/)) ? 'time' : (typeof (v) === 'string' ? 'string' : 'number')
@@ -128,7 +152,7 @@ export class DarkSkyDatasource {
       });
 
       // extract rows
-      rows = _.map(slice.data, row => {
+      rows = _.map(data, row => {
         return _.map(columns, col => {
           if (row[col.text] === undefined) return null;
 
@@ -149,15 +173,13 @@ export class DarkSkyDatasource {
   }
 
   timeseriesResponse(targets, data) {
-    // console.log("timeseriesResponse");
     var res = {
       data: _.map(targets, target => {
         let [timeframe, metric] = target.target.split('.');
-        var slice = data.data[timeframe]; // currently...
 
         return {
           target: target.target,
-          datapoints: _.map(slice.data, d => {
+          datapoints: _.map(data, d => {
             return [d[metric], d.time*1000];
           }),
         };
