@@ -1,11 +1,15 @@
 {
-  "name": "Forecast.io",
-  "id": "DarkSky",
+  "name": "DarkSky",
+  "id": "darksky",
   "type": "datasource",
 
   "metrics": true,
   "annotations": false,
 
+  "partials": {
+    "config": "partials/config.html"
+  },
+  
   "routes": [
     {
       "path": "darksky",
@@ -15,10 +19,10 @@
   ],
 
   "info": {
-    "description": "Forecast.io datasource",
+    "description": "DarkSky weather datasource",
     "author": {
-      "name": "Grafana Labs",
-      "url": "https://grafana.com"
+      "name": "andig",
+      "url": "https://github.com/andig/grafana-darksky"
     },
     "keywords": ["weather","forecast","forecast.io","dark sky"],
     "logos": {

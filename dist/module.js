@@ -1,21 +1,435 @@
-System.register(['./datasource', './query_ctrl', './config_ctrl'], function(exports_1) {
-    var datasource_1, query_ctrl_1, config_ctrl_1;
-    return {
-        setters:[
-            function (datasource_1_1) {
-                datasource_1 = datasource_1_1;
-            },
-            function (query_ctrl_1_1) {
-                query_ctrl_1 = query_ctrl_1_1;
-            },
-            function (config_ctrl_1_1) {
-                config_ctrl_1 = config_ctrl_1_1;
-            }],
-        execute: function() {
-            exports_1("Datasource", datasource_1.DarkSkyDatasource);
-            exports_1("QueryCtrl", query_ctrl_1.DarkSkyQueryCtrl);
-            exports_1("ConfigCtrl", config_ctrl_1.DarkSkyConfigCtrl);
-        }
-    }
+define(["app/plugins/sdk","lodash"], function(__WEBPACK_EXTERNAL_MODULE_grafana_app_plugins_sdk__, __WEBPACK_EXTERNAL_MODULE_lodash__) { return /******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = "./module.ts");
+/******/ })
+/************************************************************************/
+/******/ ({
+
+/***/ "./config_ctrl.ts":
+/*!************************!*\
+  !*** ./config_ctrl.ts ***!
+  \************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
 });
+var DarkSkyConfigCtrl = /** @class */function () {
+    /** @ngInject **/
+    function DarkSkyConfigCtrl($scope) {
+        console.log("DarkSkyConfigCtrl");
+        console.log($scope);
+        console.log(this);
+        this.units = [{ name: 'SI', value: 'si' }, { name: 'Auto', value: 'auto' }, { name: 'US', value: 'us' }, { name: 'CA', value: 'ca' }, { name: 'UK', value: 'uk2' }];
+        this.languages = [{ name: 'Arabic', value: 'ar' }, { name: 'Azerbaijani', value: 'az' }, { name: 'Belarusian', value: 'be' }, { name: 'Bulgarian', value: 'bg' }, { name: 'Bosnian', value: 'bs' }, { name: 'Catalan', value: 'ca' }, { name: 'Czech', value: 'cs' }, { name: 'Danish', value: 'da' }, { name: 'German', value: 'de' }, { name: 'Greek', value: 'el' }, { name: 'English', value: 'en' }, { name: 'Spanish', value: 'es' }, { name: 'Estonian', value: 'et' }, { name: 'Finnish', value: 'fi' }, { name: 'French', value: 'fr' }, { name: 'Hebrew', value: 'he' }, { name: 'Croatian', value: 'hr' }, { name: 'Hungarian', value: 'hu' }, { name: 'Indonesian', value: 'id' }, { name: 'Icelandic', value: 'is' }, { name: 'Italian', value: 'it' }, { name: 'Japanese', value: 'ja' }, { name: 'Georgian', value: 'ka' }, { name: 'Korean', value: 'ko' }, { name: 'Cornish', value: 'kw' }, { name: 'Norwegian', value: 'nb' }, { name: 'Dutch', value: 'nl' }, { name: 'Polish', value: 'pl' }, { name: 'Portuguese', value: 'pt' }, { name: 'Romanian', value: 'ro' }, { name: 'Russian', value: 'ru' }, { name: 'Slovak', value: 'sk' }, { name: 'Slovenian', value: 'sl' }, { name: 'Serbian', value: 'sr' }, { name: 'Swedish', value: 'sv' }, { name: 'Tetum', value: 'tet' }, { name: 'Turkish', value: 'tr' }, { name: 'Ukrainian', value: 'uk' }, { name: 'Chinese', value: 'zh' }];
+        this.current.jsonData.unit = this.current.jsonData.unit || 'si';
+        this.current.jsonData.language = this.current.jsonData.language || 'en';
+    }
+    DarkSkyConfigCtrl.templateUrl = 'partials/config.html';
+    return DarkSkyConfigCtrl;
+}();
+exports.DarkSkyConfigCtrl = DarkSkyConfigCtrl;
+
+/***/ }),
+
+/***/ "./datasource.ts":
+/*!***********************!*\
+  !*** ./datasource.ts ***!
+  \***********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.DarkSkyDatasource = undefined;
+
+var _lodash = __webpack_require__(/*! lodash */ "lodash");
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var DarkSkyDatasource = /** @class */function () {
+    /** @ngInject **/
+    function DarkSkyDatasource(instanceSettings, backendSrv, templateSrv, $q) {
+        this.backendSrv = backendSrv;
+        this.templateSrv = templateSrv;
+        this.$q = $q;
+        console.log("DarkSkyDatasource");
+        console.log(instanceSettings);
+        this.type = instanceSettings.type;
+        this.name = instanceSettings.name;
+        var apiUrl = _lodash2.default.filter(instanceSettings.meta.routes, { path: 'darksky' })[0].url;
+        var credentials = instanceSettings.jsonData.apikey + "/" + instanceSettings.jsonData.lat + "," + instanceSettings.jsonData.lon + "?units=" + instanceSettings.jsonData.unit + "&lang=" + instanceSettings.jsonData.language;
+        this.darkSky = apiUrl + "/" + credentials;
+        this.url = "/api/datasources/proxy/" + instanceSettings.id + "/darksky/" + credentials;
+        this.units = instanceSettings.units;
+    }
+    DarkSkyDatasource.prototype.metricFindQuery = function (query) {
+        // console.log("metricFindQuery");
+        // console.log(query);
+        var timeframes = ['currently', 'minutely', 'hourly', 'daily'];
+        // metrics for table
+        if (query == 'table') {
+            return _lodash2.default.map(timeframes, function (timeframe) {
+                return { text: timeframe, value: timeframe };
+            });
+        }
+        // metrics for timeseries
+        return this.doRequest({
+            url: this.url,
+            data: query,
+            method: 'GET'
+        }).then(function (res) {
+            var metrics = [];
+            // get all properties from forecast query
+            _lodash2.default.each(timeframes, function (key) {
+                var props = res.data[key];
+                if (props && _lodash2.default.isArray(props.data)) {
+                    props = props.data.length ? props.data[0] : {};
+                }
+                var keys = _lodash2.default.filter(_lodash2.default.keys(props), function (key) {
+                    return key != "time";
+                });
+                metrics.push.apply(metrics, keys);
+            });
+            // create metrics as properties x timeframes
+            var metricsByTime = [];
+            _lodash2.default.each(_lodash2.default.uniq(_lodash2.default.sortBy(metrics)), function (el) {
+                var s = _lodash2.default.map(timeframes, function (timeframe) {
+                    return { text: el + " (" + timeframe + ")", value: timeframe + "." + el };
+                });
+                // console.log(s);
+                metricsByTime.push.apply(metricsByTime, s);
+                return s;
+            });
+            return metricsByTime;
+        });
+    };
+    DarkSkyDatasource.prototype.query = function (options) {
+        var _this = this;
+        var query = this.buildQueryParameters(options);
+        query.targets = query.targets.filter(function (t) {
+            return !t.hide;
+        });
+        if (query.targets.length <= 0) {
+            return this.$q.when({ data: [] });
+        }
+        if (this.templateSrv.getAdhocFilters) {
+            query.adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+        } else {
+            query.adhocFilters = [];
+        }
+        console.log(this.darkSky);
+        return this.doRequest({
+            url: this.url,
+            data: query,
+            method: 'GET'
+        }).then(function (res) {
+            // table query?
+            if (_lodash2.default.filter(query.targets, { type: 'table' }).length) {
+                return _this.tableResponse(query.targets, res);
+            } else {
+                return _this.timeseriesResponse(query.targets, res);
+            }
+        });
+    };
+    DarkSkyDatasource.prototype.tableResponse = function (targets, data) {
+        // console.log("tableResponse");
+        // use first metric for table query
+        var timeframe = targets[0].target;
+        var slice = data.data[timeframe];
+        // normalize 'currently' into data: array
+        if (timeframe == 'currently') {
+            slice = {
+                data: [_lodash2.default.clone(slice)]
+            };
+        }
+        var columns = [];
+        var rows = [];
+        if (slice.data.length) {
+            // extract columns
+            columns = _lodash2.default.map(slice.data[0], function (v, k) {
+                return {
+                    text: k,
+                    type: k.match(/[Tt]ime/) ? 'time' : typeof v === 'string' ? 'string' : 'number'
+                };
+            });
+            // extract rows
+            rows = _lodash2.default.map(slice.data, function (row) {
+                return _lodash2.default.map(columns, function (col) {
+                    if (row[col.text] === undefined) return null;
+                    // time to millisec
+                    return col.type == 'time' ? row[col.text] * 1000 : row[col.text];
+                });
+            });
+        }
+        // return res;
+        return {
+            data: [{
+                type: "table",
+                columns: columns,
+                rows: rows
+            }]
+        };
+    };
+    DarkSkyDatasource.prototype.timeseriesResponse = function (targets, data) {
+        // console.log("timeseriesResponse");
+        var res = {
+            data: _lodash2.default.map(targets, function (target) {
+                var _a = target.target.split('.'),
+                    timeframe = _a[0],
+                    metric = _a[1];
+                var slice = data.data[timeframe]; // currently...
+                return {
+                    target: target.target,
+                    datapoints: _lodash2.default.map(slice.data, function (d) {
+                        return [d[metric], d.time * 1000];
+                    })
+                };
+            })
+        };
+        return res;
+    };
+    DarkSkyDatasource.prototype.testDatasource = function () {
+        return this.doRequest({
+            url: this.url,
+            method: 'GET'
+        }).then(function (response) {
+            if (response.status === 200) {
+                return { status: "success", message: "Data source is working", title: "Success" };
+            }
+            return { status: "error", message: "Data source returned status " + response.status, title: "Error" };
+        });
+    };
+    DarkSkyDatasource.prototype.annotationQuery = function (options) {
+        return [];
+    };
+    DarkSkyDatasource.prototype.doRequest = function (options) {
+        return this.backendSrv.datasourceRequest(options);
+    };
+    DarkSkyDatasource.prototype.buildQueryParameters = function (options) {
+        var _this = this;
+        // remove placeholder targets
+        options.targets = _lodash2.default.filter(options.targets, function (target) {
+            return target.target !== 'select metric';
+        });
+        var targets = _lodash2.default.map(options.targets, function (target) {
+            return {
+                target: _this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
+                refId: target.refId,
+                hide: target.hide,
+                type: target.type
+            };
+        });
+        options.targets = targets;
+        return options;
+    };
+    return DarkSkyDatasource;
+}();
+exports.DarkSkyDatasource = DarkSkyDatasource;
+
+/***/ }),
+
+/***/ "./module.ts":
+/*!*******************!*\
+  !*** ./module.ts ***!
+  \*******************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ConfigCtrl = exports.QueryCtrl = exports.Datasource = undefined;
+
+var _datasource = __webpack_require__(/*! ./datasource */ "./datasource.ts");
+
+var _query_ctrl = __webpack_require__(/*! ./query_ctrl */ "./query_ctrl.ts");
+
+var _config_ctrl = __webpack_require__(/*! ./config_ctrl */ "./config_ctrl.ts");
+
+exports.Datasource = _datasource.DarkSkyDatasource;
+exports.QueryCtrl = _query_ctrl.DarkSkyQueryCtrl;
+exports.ConfigCtrl = _config_ctrl.DarkSkyConfigCtrl;
+
+/***/ }),
+
+/***/ "./query_ctrl.ts":
+/*!***********************!*\
+  !*** ./query_ctrl.ts ***!
+  \***********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.DarkSkyQueryCtrl = undefined;
+
+var _sdk = __webpack_require__(/*! grafana/app/plugins/sdk */ "grafana/app/plugins/sdk");
+
+var __extends = undefined && undefined.__extends || function () {
+    var _extendStatics = function extendStatics(d, b) {
+        _extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function (d, b) {
+            d.__proto__ = b;
+        } || function (d, b) {
+            for (var p in b) {
+                if (b.hasOwnProperty(p)) d[p] = b[p];
+            }
+        };
+        return _extendStatics(d, b);
+    };
+    return function (d, b) {
+        _extendStatics(d, b);
+        function __() {
+            this.constructor = d;
+        }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+}();
+
+// import './css/query-editor.css!'
+var DarkSkyQueryCtrl = /** @class */function (_super) {
+    __extends(DarkSkyQueryCtrl, _super);
+    /** @ngInject **/
+    function DarkSkyQueryCtrl($scope, $injector, templateSrv) {
+        var _this = _super.call(this, $scope, $injector) || this;
+        _this.templateSrv = templateSrv;
+        _this.types = [{ text: 'Time series', value: 'timeseries' }, { text: 'Table', value: 'table' }];
+        _this.target.target = _this.target.target || 'select metric';
+        _this.target.type = _this.target.type || (_this.panelCtrl.panel.type === 'table' ? 'table' : 'timeseries');
+        return _this;
+    }
+    DarkSkyQueryCtrl.prototype.getOptions = function (query) {
+        return this.datasource.metricFindQuery(this.target.type);
+    };
+    DarkSkyQueryCtrl.prototype.refresh = function () {
+        this.panelCtrl.refresh(); // Asks the panel to refresh data.
+    };
+    DarkSkyQueryCtrl.templateUrl = 'partials/query.editor.html';
+    return DarkSkyQueryCtrl;
+}(_sdk.QueryCtrl);
+exports.DarkSkyQueryCtrl = DarkSkyQueryCtrl;
+
+/***/ }),
+
+/***/ "grafana/app/plugins/sdk":
+/*!**********************************!*\
+  !*** external "app/plugins/sdk" ***!
+  \**********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE_grafana_app_plugins_sdk__;
+
+/***/ }),
+
+/***/ "lodash":
+/*!*************************!*\
+  !*** external "lodash" ***!
+  \*************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE_lodash__;
+
+/***/ })
+
+/******/ })});;
 //# sourceMappingURL=module.js.map

@@ -4,8 +4,10 @@
   "description": "Grafana weather forecast datasource",
   "main": "index.js",
   "scripts": {
-    "build": "./node_modules/grunt-cli/bin/grunt",
-    "watch": "./node_modules/grunt-cli/bin/grunt watch"
+    "build": "webpack --config webpack.config.prod.js",
+    "dev": "webpack --mode development",
+    "watch": "webpack --mode development --watch",
+    "lint": "tslint --config tslint.json --project tsconfig.json"
   },
   "repository": {
     "type": "git",
@@ -24,21 +26,27 @@
     "lodash": "^4.17.4"
   },
   "devDependencies": {
+    "@types/grafana": "https://github.com/CorpGlory/types-grafana.git",
     "@types/lodash": "^4.14.74",
-    "grafana-sdk-mocks": "github:grafana/grafana-sdk-mocks",
-    "grunt": "^1.0.1",
-    "grunt-contrib-clean": "^1.1.0",
-    "grunt-contrib-copy": "^1.0.0",
-    "grunt-contrib-watch": "^1.0.0",
-    "grunt-string-replace": "^1.3",
-    "grunt-typescript": "^0.8.0",
-    "load-grunt-tasks": "^3.5.2",
+    "babel": "^6.23.0",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-jest": "^23.4.2",
+    "babel-loader": "^7.1.5",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "clean-webpack-plugin": "^0.1.19",
+    "copy-webpack-plugin": "^4.5.2",
+    "css-loader": "^1.0.0",
+    "ng-annotate-webpack-plugin": "^0.3.0",
+    "regenerator-runtime": "^0.12.1",
+    "style-loader": "^0.22.1",
+    "ts-loader": "^4.5.0",
+    "tslint": "^5.11.0",
+    "tslint-config-airbnb": "^5.10.0",
     "typescript": "^3.0.1",
-    "plugin-typescript": "^7.1.0",
-    "systemjs-plugin-css": "^0.1.35",
-    "moment": "^2.18.1",
-    "q": "^1.5.0",
-    "systemjs": "^0.19.47"
+    "webpack": "^4.17.1",
+    "webpack-cli": "^3.1.0"
   },
   "homepage": "https://github.com/andig/grafana-darksky#readme"
 }

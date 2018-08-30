@@ -1,10 +1,12 @@
-import {QueryCtrl} from 'app/plugins/sdk';
-import './css/query-editor.css!'
+import { QueryCtrl } from 'grafana/app/plugins/sdk';
+// import './css/query-editor.css!'
 
 export class DarkSkyQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
-  private types: any;
+  
+  private types: {text: string, value: string}[];
 
+  /** @ngInject **/
   constructor($scope, $injector, private templateSrv)  {
     super($scope, $injector);
 

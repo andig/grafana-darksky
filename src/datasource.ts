@@ -8,6 +8,7 @@ export class DarkSkyDatasource {
   darkSky: string;
   url: string;
 
+  /** @ngInject **/
   constructor(instanceSettings, private backendSrv, private templateSrv, private $q) {
     console.log("DarkSkyDatasource");
     console.log(instanceSettings);
@@ -15,7 +16,7 @@ export class DarkSkyDatasource {
     this.type = instanceSettings.type;
     this.name = instanceSettings.name;
 
-    var apiUrl = _.filter(instanceSettings.meta.routes, { path: 'darksky' })[0].url;
+    var apiUrl = (_.filter(instanceSettings.meta.routes, { path: 'darksky' })[0] as any).url;
     var credentials = `${instanceSettings.jsonData.apikey}/${instanceSettings.jsonData.lat},${instanceSettings.jsonData.lon}?units=${instanceSettings.jsonData.unit}&lang=${instanceSettings.jsonData.language}`;
     this.darkSky = `${apiUrl}/${credentials}`;
     this.url = `/api/datasources/proxy/${instanceSettings.id}/darksky/${credentials}`;
@@ -40,7 +41,7 @@ export class DarkSkyDatasource {
       data: query,
       method: 'GET'
     }).then(res => {
-      var metrics = [];
+      let metrics: string[] = [];
 
       // get all properties from forecast query
       _.each(timeframes, key => {
@@ -48,13 +49,14 @@ export class DarkSkyDatasource {
         if (props && _.isArray(props.data)) {
           props = props.data.length ? props.data[0] : {};
         }
-        metrics.push(..._.filter(_.keys(props), key => {
+        var keys = _.filter(_.keys(props), key => {
           return key != "time"
-        }));
+        });
+        metrics.push(...keys);
       });
 
       // create metrics as properties x timeframes
-      var metricsByTime = [];
+      let metricsByTime: {text:string, value:string}[] = [];
      _.each(_.uniq(_.sortBy(metrics)), el => {
         var s = _.map(timeframes, timeframe => {
           return { text: `${el} (${timeframe})`, value: `${timeframe}.${el}` };
@@ -113,7 +115,8 @@ export class DarkSkyDatasource {
       }
     }
 
-    var columns = [], rows = [];
+    let columns: { text: string, type: string }[] = [];
+    let rows: any[] = [];
 
     if (slice.data.length) {
       // extract columns
@@ -172,6 +175,7 @@ export class DarkSkyDatasource {
       if (response.status === 200) {
         return { status: "success", message: "Data source is working", title: "Success" };
       }
+      return { status: "error", message: `Data source returned status ${response.status}`, title: "Error" };
     });
   }
 
@@ -184,7 +188,7 @@ export class DarkSkyDatasource {
   }
 
   buildQueryParameters(options) {
-    //remove placeholder targets
+    // remove placeholder targets
     options.targets = _.filter(options.targets, target => {
       return target.target !== 'select metric';
     });
