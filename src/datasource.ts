@@ -1,10 +1,21 @@
 import _ from "lodash";
 
+type ApiCallDefinition = {
+  dataset: string,
+  timestamps: Array<number>
+}
+
+type Metric = {
+  text: string,
+  value: string
+}
+
 export class DarkSkyDatasource {
 
   datasourceName: string;
   apiUrl: string;
   apiOptions: string;
+  metrics: Metric[];
 
   /** @ngInject **/
   constructor(instanceSettings, private backendSrv, private templateSrv, private $q) {
@@ -17,6 +28,11 @@ export class DarkSkyDatasource {
   }
 
   metricFindQuery(query) {
+    // cache metrics query
+    if (this.metrics) {
+      return this.metrics;
+    }
+
     return this.doRequest({
       data: query
     }).then(res => {
@@ -30,10 +46,12 @@ export class DarkSkyDatasource {
         metrics.push(... _.filter(_.keys(props), key => key != 'time'));
       }, [] as string[]);
 
-      return _.map(_.uniq(_.sortBy(metrics)), metric => ({
+      this.metrics = _.map(_.uniq(_.sortBy(metrics)), metric => ({
         text: metric, 
         value: metric,
       }));
+
+      return this.metrics;
     });
   }
 
@@ -56,6 +74,10 @@ export class DarkSkyDatasource {
       url: `${this.apiUrl},${ts}?${this.apiOptions}`,
       data: query
     }));
+
+    if (apiCalls.timestamps.length >= 10) {
+      console.warn(`DarkSky will execute ${apiCalls.timestamps.length} api.`);
+    }
 
     return Promise.all(requests).then(response => {
       // extraxt data from json result structure
@@ -84,7 +106,7 @@ export class DarkSkyDatasource {
     });
   }
 
-  getApiCalls(range, maxDataPoints) {
+  getApiCalls(range, maxDataPoints): ApiCallDefinition {
     let dataset = 'hourly', step = 1;
     let hours = range.to.diff(range.from, 'hours');
 
@@ -179,7 +201,13 @@ export class DarkSkyDatasource {
     return this.backendSrv.datasourceRequest(_.assign({
       url: this.apiUrl,
       method: 'GET',
-    }, options));
+    }, options)).then(response => {
+      let calls = _.get(response.headers(), 'x-forecast-api-calls');
+      if (calls > 400) {
+        console.warn(`DarkSky noticed you've already executed ${calls} api calls. Free limit is 1000.`);
+      }
+      return response;
+    });
   }
 
   annotationQuery(options) {

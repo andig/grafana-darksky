@@ -151,6 +151,11 @@ var DarkSkyDatasource = /** @class */function () {
         this.apiOptions = "units=" + config.unit + "&lang=" + config.language;
     }
     DarkSkyDatasource.prototype.metricFindQuery = function (query) {
+        var _this = this;
+        // cache metrics query
+        if (this.metrics) {
+            return this.metrics;
+        }
         return this.doRequest({
             data: query
         }).then(function (res) {
@@ -165,12 +170,13 @@ var DarkSkyDatasource = /** @class */function () {
                     return key != 'time';
                 }));
             }, []);
-            return _lodash2.default.map(_lodash2.default.uniq(_lodash2.default.sortBy(metrics)), function (metric) {
+            _this.metrics = _lodash2.default.map(_lodash2.default.uniq(_lodash2.default.sortBy(metrics)), function (metric) {
                 return {
                     text: metric,
                     value: metric
                 };
             });
+            return _this.metrics;
         });
     };
     DarkSkyDatasource.prototype.query = function (options) {
@@ -194,6 +200,9 @@ var DarkSkyDatasource = /** @class */function () {
                 data: query
             });
         });
+        if (apiCalls.timestamps.length >= 10) {
+            console.warn("DarkSky will execute " + apiCalls.timestamps.length + " api.");
+        }
         return Promise.all(requests).then(function (response) {
             // extraxt data from json result structure
             var data = _lodash2.default.transform(response, function (data, res) {
@@ -309,7 +318,13 @@ var DarkSkyDatasource = /** @class */function () {
         return this.backendSrv.datasourceRequest(_lodash2.default.assign({
             url: this.apiUrl,
             method: 'GET'
-        }, options));
+        }, options)).then(function (response) {
+            var calls = _lodash2.default.get(response.headers(), 'x-forecast-api-calls');
+            if (calls > 400) {
+                console.warn("DarkSky noticed you've already executed " + calls + " api calls. Free limit is 1000.");
+            }
+            return response;
+        });
     };
     DarkSkyDatasource.prototype.annotationQuery = function (options) {
         return [];
