@@ -2,56 +2,38 @@ import _ from "lodash";
 
 export class DarkSkyDatasource {
 
-  type: string;
-  name: string;
-  // darkSky: string;
+  datasourceName: string;
+  apiUrl: string;
   apiOptions: string;
-  url: string;
 
   /** @ngInject **/
   constructor(instanceSettings, private backendSrv, private templateSrv, private $q) {
-    console.log("DarkSkyDatasource");
-    console.log(instanceSettings);
+    this.datasourceName = instanceSettings.name;
 
-    this.type = instanceSettings.type;
-    this.name = instanceSettings.name;
-
-    var credentials = `${instanceSettings.jsonData.apikey}/${instanceSettings.jsonData.lat},${instanceSettings.jsonData.lon}`;
-    // var apiUrl = (_.filter(instanceSettings.meta.routes, { path: 'darksky' })[0] as any).url;
-    // this.darkSky = `${apiUrl}/${credentials}`;
-    this.apiOptions = `units=${instanceSettings.jsonData.unit}&lang=${instanceSettings.jsonData.language}`;
-    this.url = `/api/datasources/proxy/${instanceSettings.id}/darksky/${credentials}`;
+    let config = instanceSettings.jsonData;
+    let credentials = `${config.apikey}/${config.lat},${config.lon}`;
+    this.apiUrl = `/api/datasources/proxy/${instanceSettings.id}/darksky/${credentials}`;
+    this.apiOptions = `units=${config.unit}&lang=${config.language}`;
   }
 
   metricFindQuery(query) {
-    const timeframes = ['currently', 'minutely', 'hourly', 'daily'];
-
-    // metrics for timeseries
     return this.doRequest({
-      url: this.url,
-      data: query,
-      method: 'GET'
+      data: query
     }).then(res => {
-      let metrics: string[] = [];
-
       // get all properties from forecast query
-      _.each(timeframes, key => {
-        var props = res.data[key];
+      const datasets = ['currently', /*'minutely',*/ 'hourly', 'daily'];
+      let metrics = _.transform(datasets, (metrics, dataset) => {
+        let props = res.data[dataset];
         if (props && _.isArray(props.data)) {
           props = props.data.length ? props.data[0] : {};
         }
-        var keys = _.filter(_.keys(props), key => {
-          return key != "time"
-        });
-        metrics.push(...keys);
-      });
+        metrics.push(... _.filter(_.keys(props), key => key != 'time'));
+      }, [] as string[]);
 
-      return _.map(_.uniq(_.sortBy(metrics)), metric => {
-        return {
-          text: metric,
-          value: metric
-        };
-      });
+      return _.map(_.uniq(_.sortBy(metrics)), metric => ({
+        text: metric, 
+        value: metric,
+      }));
     });
   }
 
@@ -60,59 +42,52 @@ export class DarkSkyDatasource {
     query.targets = query.targets.filter(t => !t.hide);
 
     if (query.targets.length <= 0) {
-      return this.$q.when({data: []});
+      return this.$q.when({ data: [] });
     }
 
     if (this.templateSrv.getAdhocFilters) {
-      query.adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+      query.adhocFilters = this.templateSrv.getAdhocFilters(this.datasourceName);
     } else {
       query.adhocFilters = [];
     }
 
-    console.log("query");
-    console.log(query);
-
-    let apiCalls = this.getApiCalls(query.range);
-    // console.log("apiCalls");
-    // console.log(apiCalls);
-
-    let requests = _.map(apiCalls.timestamps, ts => {
-      return this.doRequest({
-        url: `${this.url},${ts}?${this.apiOptions}`,
-        data: query,
-        method: 'GET'
-      });
-    });
+    let apiCalls = this.getApiCalls(query.range, query.maxDataPoints);
+    let requests = _.map(apiCalls.timestamps, ts => this.doRequest({
+      url: `${this.apiUrl},${ts}?${this.apiOptions}`,
+      data: query
+    }));
 
     return Promise.all(requests).then(response => {
-      let data: any[] = [];
-      _.each(response, res => {
+      // extraxt data from json result structure
+      let data = _.transform(response, (data, res) => {
+        // select currently datapoint
+        let dataset = _.get(res, `data.${apiCalls.dataset}`);
         if (apiCalls.dataset == 'currently') {
-          data.push(res.data.currently);
+          data.push(dataset);
+          return;
         }
-        else {
-          // select timestamps inside query range
-          let filtered = _.filter(res.data[apiCalls.dataset].data, res => {
-            let timeMS = res.time * 1000;
-            return timeMS >= query.range.from && timeMS <= query.range.to;
-          });
-          // sort by timestamp
-          data.push(...filtered);
-        }
-      });
-      
+
+        // select timestamps inside query range
+        data.push(... _.filter(dataset.data, res => {
+          let timeMS = res.time * 1000;
+          return timeMS >= query.range.from && timeMS <= query.range.to;
+        }));
+      }, [] as any[]);
+
+      // sort by timestamp
       data = _.sortBy(data, 'time')
 
       // table query?
-      return (_.filter(query.targets, { type: 'table' }).length) 
+      return (_.filter(query.targets, { type: 'table' }).length)
         ? this.tableResponse(query.targets, data)
         : this.timeseriesResponse(query.targets, data);
     });
   }
 
-  getApiCalls(range) {
-    let dataset = 'hourly';
+  getApiCalls(range, maxDataPoints) {
+    let dataset = 'hourly', step = 1;
     let hours = range.to.diff(range.from, 'hours');
+
     let date = range.from.clone().startOf('day');
     let timestamps: any[] = [date.unix()];
 
@@ -120,13 +95,18 @@ export class DarkSkyDatasource {
     if (range.to.date() !== range.from.date()) {
       if (hours > 7 * 24) { // daily queries - daily
         dataset = 'daily';
+        if (maxDataPoints) { // limit number of queries
+          let days = range.to.diff(range.from, 'days');
+          step = Math.max(step, Math.floor(days / maxDataPoints));
+        }
       };
 
       // create one timestamp per additional day
-      do {
-        date.add(1, 'day');
+      date.add(step, 'day');
+      while (date.isBefore(range.to)) {
         timestamps.push(date.unix());
-      } while (date.isBefore(range.to));
+        date.add(step, 'day');
+      }
     }
 
     return {
@@ -139,30 +119,20 @@ export class DarkSkyDatasource {
     // use first metric for table query
     let timeframe = targets[0].target;
 
-    let columns: { text: string, type: string }[] = [];
-    let rows: any[] = [];
+    let columns = _.map(_.head(data) as any, (val, key) => ({
+      text: key,
+      type: (key.match(/[Tt]ime/)) ? 'time' : (typeof (val) === 'string' ? 'string' : 'number')
+    }));
 
-    if (data.length) {
-      // extract columns
-      columns = _.map(data[0], (v,k) => {
-        return {
-          text: k,
-          type: (k.match(/[Tt]ime/)) ? 'time' : (typeof (v) === 'string' ? 'string' : 'number')
-        };
-      });
+    let rows = _.map(data, row => {
+      return _.map(columns as any[], col => {
+        if (row[col.text] === undefined) return null;
 
-      // extract rows
-      rows = _.map(data, row => {
-        return _.map(columns, col => {
-          if (row[col.text] === undefined) return null;
+        // time to millisec
+        return col.type == 'time' ? row[col.text] * 1000 : row[col.text];
+      })
+    });
 
-          // time to millisec
-          return col.type == 'time' ? row[col.text] * 1000 : row[col.text];
-        })
-      });
-    }
-
-    // return res;
     return {
       data: [{
         type: "table",
@@ -173,59 +143,46 @@ export class DarkSkyDatasource {
   }
 
   timeseriesResponse(targets, data) {
-    var res = {
-      data: _.map(targets, target => {
-        let [timeframe, metric] = target.target.split('.');
-
-        return {
-          target: target.target,
-          datapoints: _.map(data, d => {
-            return [d[metric], d.time*1000];
-          }),
-        };
-      })
+    let res = {
+      data: _.map(targets, target => ({
+        target: target.target,
+        datapoints: _.map(data, d => [d[target.target], d.time * 1000]),
+      }))
     }
 
     return res;
   }
 
+  buildQueryParameters(options) {
+    // remove placeholder targets
+    options.targets = _.filter(options.targets, target => target.target !== 'select metric');
+    // apply variables
+    options.targets = _.map(options.targets, target => ({
+      target: this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
+      refId: target.refId,
+      hide: target.hide,
+      type: target.type
+    }));
+
+    return options;
+  }
+
   testDatasource() {
-    return this.doRequest({
-      url: this.url,
+    return this.doRequest({}).then(response => (response.status == 200) 
+      ? { status: 'success', message: 'Data source is working', title: 'Success' }
+      : { status: 'error', message: `Data source returned status ${response.status}`, title: 'Error' }
+    );
+  }
+
+  doRequest(options) {
+    // call with pre-defined default options
+    return this.backendSrv.datasourceRequest(_.assign({
+      url: this.apiUrl,
       method: 'GET',
-    }).then(response => {
-      if (response.status === 200) {
-        return { status: "success", message: "Data source is working", title: "Success" };
-      }
-      return { status: "error", message: `Data source returned status ${response.status}`, title: "Error" };
-    });
+    }, options));
   }
 
   annotationQuery(options) {
     return [];
-  }
-
-  doRequest(options) {
-    return this.backendSrv.datasourceRequest(options);
-  }
-
-  buildQueryParameters(options) {
-    // remove placeholder targets
-    options.targets = _.filter(options.targets, target => {
-      return target.target !== 'select metric';
-    });
-
-    var targets = _.map(options.targets, target => {
-      return {
-        target: this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
-        refId: target.refId,
-        hide: target.hide,
-        type: target.type
-      };
-    });
-
-    options.targets = targets;
-
-    return options;
   }
 }

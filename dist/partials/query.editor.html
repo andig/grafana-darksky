@@ -7,15 +7,6 @@
           ng-change="ctrl.refresh()"></select>
       </div>
     </div>
-<!--
-    <div class="gf-form">
-      <label class="gf-form-label width-6 query-keyword">Timescale</label>
-      <div class="gf-form-select-wrapper">
-        <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.timescale" ng-options="f.value as f.text for f in ctrl.timescales"
-          ng-change="ctrl.refresh()"></select>
-      </div>
-    </div>
--->
     <div>
       <div class="gf-form">
         <gf-form-dropdown model="ctrl.target.target"
@@ -23,7 +14,7 @@
           lookup-text="true"
           get-options="ctrl.getOptions($query)"
           on-change="ctrl.refresh()">
-      </gf-form-dropdown>
+        </gf-form-dropdown>
       </div>
     </div>
     <div class="gf-form gf-form--grow">

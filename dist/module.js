@@ -144,36 +144,27 @@ var DarkSkyDatasource = /** @class */function () {
         this.backendSrv = backendSrv;
         this.templateSrv = templateSrv;
         this.$q = $q;
-        console.log("DarkSkyDatasource");
-        console.log(instanceSettings);
-        this.type = instanceSettings.type;
-        this.name = instanceSettings.name;
-        var credentials = instanceSettings.jsonData.apikey + "/" + instanceSettings.jsonData.lat + "," + instanceSettings.jsonData.lon;
-        // var apiUrl = (_.filter(instanceSettings.meta.routes, { path: 'darksky' })[0] as any).url;
-        // this.darkSky = `${apiUrl}/${credentials}`;
-        this.apiOptions = "units=" + instanceSettings.jsonData.unit + "&lang=" + instanceSettings.jsonData.language;
-        this.url = "/api/datasources/proxy/" + instanceSettings.id + "/darksky/" + credentials;
+        this.datasourceName = instanceSettings.name;
+        var config = instanceSettings.jsonData;
+        var credentials = config.apikey + "/" + config.lat + "," + config.lon;
+        this.apiUrl = "/api/datasources/proxy/" + instanceSettings.id + "/darksky/" + credentials;
+        this.apiOptions = "units=" + config.unit + "&lang=" + config.language;
     }
     DarkSkyDatasource.prototype.metricFindQuery = function (query) {
-        var timeframes = ['currently', 'minutely', 'hourly', 'daily'];
-        // metrics for timeseries
         return this.doRequest({
-            url: this.url,
-            data: query,
-            method: 'GET'
+            data: query
         }).then(function (res) {
-            var metrics = [];
             // get all properties from forecast query
-            _lodash2.default.each(timeframes, function (key) {
-                var props = res.data[key];
+            var datasets = ['currently', /*'minutely',*/'hourly', 'daily'];
+            var metrics = _lodash2.default.transform(datasets, function (metrics, dataset) {
+                var props = res.data[dataset];
                 if (props && _lodash2.default.isArray(props.data)) {
                     props = props.data.length ? props.data[0] : {};
                 }
-                var keys = _lodash2.default.filter(_lodash2.default.keys(props), function (key) {
-                    return key != "time";
-                });
-                metrics.push.apply(metrics, keys);
-            });
+                metrics.push.apply(metrics, _lodash2.default.filter(_lodash2.default.keys(props), function (key) {
+                    return key != 'time';
+                }));
+            }, []);
             return _lodash2.default.map(_lodash2.default.uniq(_lodash2.default.sortBy(metrics)), function (metric) {
                 return {
                     text: metric,
@@ -192,44 +183,41 @@ var DarkSkyDatasource = /** @class */function () {
             return this.$q.when({ data: [] });
         }
         if (this.templateSrv.getAdhocFilters) {
-            query.adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+            query.adhocFilters = this.templateSrv.getAdhocFilters(this.datasourceName);
         } else {
             query.adhocFilters = [];
         }
-        console.log("query");
-        console.log(query);
-        var apiCalls = this.getApiCalls(query.range);
-        // console.log("apiCalls");
-        // console.log(apiCalls);
+        var apiCalls = this.getApiCalls(query.range, query.maxDataPoints);
         var requests = _lodash2.default.map(apiCalls.timestamps, function (ts) {
             return _this.doRequest({
-                url: _this.url + "," + ts + "?" + _this.apiOptions,
-                data: query,
-                method: 'GET'
+                url: _this.apiUrl + "," + ts + "?" + _this.apiOptions,
+                data: query
             });
         });
         return Promise.all(requests).then(function (response) {
-            var data = [];
-            _lodash2.default.each(response, function (res) {
+            // extraxt data from json result structure
+            var data = _lodash2.default.transform(response, function (data, res) {
+                // select currently datapoint
+                var dataset = _lodash2.default.get(res, "data." + apiCalls.dataset);
                 if (apiCalls.dataset == 'currently') {
-                    data.push(res.data.currently);
-                } else {
-                    // select timestamps inside query range
-                    var filtered = _lodash2.default.filter(res.data[apiCalls.dataset].data, function (res) {
-                        var timeMS = res.time * 1000;
-                        return timeMS >= query.range.from && timeMS <= query.range.to;
-                    });
-                    // sort by timestamp
-                    data.push.apply(data, filtered);
+                    data.push(dataset);
+                    return;
                 }
-            });
+                // select timestamps inside query range
+                data.push.apply(data, _lodash2.default.filter(dataset.data, function (res) {
+                    var timeMS = res.time * 1000;
+                    return timeMS >= query.range.from && timeMS <= query.range.to;
+                }));
+            }, []);
+            // sort by timestamp
             data = _lodash2.default.sortBy(data, 'time');
             // table query?
             return _lodash2.default.filter(query.targets, { type: 'table' }).length ? _this.tableResponse(query.targets, data) : _this.timeseriesResponse(query.targets, data);
         });
     };
-    DarkSkyDatasource.prototype.getApiCalls = function (range) {
-        var dataset = 'hourly';
+    DarkSkyDatasource.prototype.getApiCalls = function (range, maxDataPoints) {
+        var dataset = 'hourly',
+            step = 1;
         var hours = range.to.diff(range.from, 'hours');
         var date = range.from.clone().startOf('day');
         var timestamps = [date.unix()];
@@ -238,13 +226,19 @@ var DarkSkyDatasource = /** @class */function () {
             if (hours > 7 * 24) {
                 // daily queries - daily
                 dataset = 'daily';
+                if (maxDataPoints) {
+                    // limit number of queries
+                    var days = range.to.diff(range.from, 'days');
+                    step = Math.max(step, Math.floor(days / maxDataPoints));
+                }
             }
             ;
             // create one timestamp per additional day
-            do {
-                date.add(1, 'day');
+            date.add(step, 'day');
+            while (date.isBefore(range.to)) {
                 timestamps.push(date.unix());
-            } while (date.isBefore(range.to));
+                date.add(step, 'day');
+            }
         }
         return {
             dataset: dataset,
@@ -254,26 +248,19 @@ var DarkSkyDatasource = /** @class */function () {
     DarkSkyDatasource.prototype.tableResponse = function (targets, data) {
         // use first metric for table query
         var timeframe = targets[0].target;
-        var columns = [];
-        var rows = [];
-        if (data.length) {
-            // extract columns
-            columns = _lodash2.default.map(data[0], function (v, k) {
-                return {
-                    text: k,
-                    type: k.match(/[Tt]ime/) ? 'time' : typeof v === 'string' ? 'string' : 'number'
-                };
+        var columns = _lodash2.default.map(_lodash2.default.head(data), function (val, key) {
+            return {
+                text: key,
+                type: key.match(/[Tt]ime/) ? 'time' : typeof val === 'string' ? 'string' : 'number'
+            };
+        });
+        var rows = _lodash2.default.map(data, function (row) {
+            return _lodash2.default.map(columns, function (col) {
+                if (row[col.text] === undefined) return null;
+                // time to millisec
+                return col.type == 'time' ? row[col.text] * 1000 : row[col.text];
             });
-            // extract rows
-            rows = _lodash2.default.map(data, function (row) {
-                return _lodash2.default.map(columns, function (col) {
-                    if (row[col.text] === undefined) return null;
-                    // time to millisec
-                    return col.type == 'time' ? row[col.text] * 1000 : row[col.text];
-                });
-            });
-        }
-        // return res;
+        });
         return {
             data: [{
                 type: "table",
@@ -285,35 +272,15 @@ var DarkSkyDatasource = /** @class */function () {
     DarkSkyDatasource.prototype.timeseriesResponse = function (targets, data) {
         var res = {
             data: _lodash2.default.map(targets, function (target) {
-                var _a = target.target.split('.'),
-                    timeframe = _a[0],
-                    metric = _a[1];
                 return {
                     target: target.target,
                     datapoints: _lodash2.default.map(data, function (d) {
-                        return [d[metric], d.time * 1000];
+                        return [d[target.target], d.time * 1000];
                     })
                 };
             })
         };
         return res;
-    };
-    DarkSkyDatasource.prototype.testDatasource = function () {
-        return this.doRequest({
-            url: this.url,
-            method: 'GET'
-        }).then(function (response) {
-            if (response.status === 200) {
-                return { status: "success", message: "Data source is working", title: "Success" };
-            }
-            return { status: "error", message: "Data source returned status " + response.status, title: "Error" };
-        });
-    };
-    DarkSkyDatasource.prototype.annotationQuery = function (options) {
-        return [];
-    };
-    DarkSkyDatasource.prototype.doRequest = function (options) {
-        return this.backendSrv.datasourceRequest(options);
     };
     DarkSkyDatasource.prototype.buildQueryParameters = function (options) {
         var _this = this;
@@ -321,7 +288,8 @@ var DarkSkyDatasource = /** @class */function () {
         options.targets = _lodash2.default.filter(options.targets, function (target) {
             return target.target !== 'select metric';
         });
-        var targets = _lodash2.default.map(options.targets, function (target) {
+        // apply variables
+        options.targets = _lodash2.default.map(options.targets, function (target) {
             return {
                 target: _this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
                 refId: target.refId,
@@ -329,8 +297,22 @@ var DarkSkyDatasource = /** @class */function () {
                 type: target.type
             };
         });
-        options.targets = targets;
         return options;
+    };
+    DarkSkyDatasource.prototype.testDatasource = function () {
+        return this.doRequest({}).then(function (response) {
+            return response.status == 200 ? { status: 'success', message: 'Data source is working', title: 'Success' } : { status: 'error', message: "Data source returned status " + response.status, title: 'Error' };
+        });
+    };
+    DarkSkyDatasource.prototype.doRequest = function (options) {
+        // call with pre-defined default options
+        return this.backendSrv.datasourceRequest(_lodash2.default.assign({
+            url: this.apiUrl,
+            method: 'GET'
+        }, options));
+    };
+    DarkSkyDatasource.prototype.annotationQuery = function (options) {
+        return [];
     };
     return DarkSkyDatasource;
 }();
