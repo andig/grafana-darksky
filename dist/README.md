@@ -1,10 +1,12 @@
-## DarkSky Datasource - weather and forecast data for Grafana
+# DarkSky Datasource - weather and forecast data for Grafana
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7QSA9U4DN9JAQ)
 
 This plugin allows to history weather conditions and forecast data as returned by the [DarkSky](https://darksky.net) API.
 
 ![dashboard](https://raw.githubusercontent.com/andig/grafana-darksky/gh-pages/dashboard.png)
 
-### Requirements
+## Requirements
 
 1. API key
 
@@ -14,7 +16,7 @@ This plugin allows to history weather conditions and forecast data as returned b
 
    Weather data will be available for the location defined when creating the data source. If unsure you can alwayds use [Google Maps](https://maps.google.com) or IP location APIs like [ipgeolocation.io](https://ipgeolocation.io).
 
-### Configuration
+## Configuration
 
 Example configuration:
 

@@ -1,6 +1,6 @@
 {
   "name": "DarkSky",
-  "id": "darksky",
+  "id": "andig-darksky-datasource",
   "type": "datasource",
 
   "metrics": true,
