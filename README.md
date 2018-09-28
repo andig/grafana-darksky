@@ -14,7 +14,7 @@ This plugin allows to history weather conditions and forecast data as returned b
 
 2. Geo location
 
-   Weather data will be available for the location defined when creating the data source. If unsure you can alwayds use [Google Maps](https://maps.google.com) or IP location APIs like [ipgeolocation.io](https://ipgeolocation.io).
+   Weather data will be available for the location defined when creating the data source. If unsure you can always use [Google Maps](https://maps.google.com) or IP location APIs like [ipgeolocation.io](https://ipgeolocation.io).
 
 ## Configuration
 
