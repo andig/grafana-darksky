@@ -2,7 +2,7 @@
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7QSA9U4DN9JAQ)
 
-This plugin allows to history weather conditions and forecast data as returned by the [DarkSky](https://darksky.net) API.
+This plugin allows to graph historic weather conditions and forecast data as returned by the [DarkSky](https://darksky.net) API.
 
 ![dashboard](https://raw.githubusercontent.com/andig/grafana-darksky/gh-pages/dashboard.png)
 
