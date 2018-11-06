@@ -21,3 +21,10 @@ This plugin allows to graph historic weather conditions and forecast data as ret
 Example configuration:
 
 ![config](https://raw.githubusercontent.com/andig/grafana-darksky/gh-pages/config.png)
+
+## Frequently asked questions
+
+1. I've selected a metric- why does it not appear at certain zoom levels?
+   
+   The DarkSky API offers different data nodes, e.g. hourly and daily data. Not all metrics are available on all levels. During selection, this datasource offers all metrics available on any level of DarkSky data. If in doubt which metric to choose please take a look at the raw DarkSky API response.
+   
