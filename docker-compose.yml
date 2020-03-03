@@ -7,4 +7,4 @@ services:
       - "3000:3000"
     volumes:
       - ./dist:/var/lib/grafana/plugins/dark-sky
-      - ./provisioning/datatsources:/etc/grafana/provisioning/datasources
+      - ./provisioning/datasources:/etc/grafana/provisioning/datasources
