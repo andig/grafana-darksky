@@ -3,8 +3,6 @@ export class DarkskyQueryOptionsCtrl {
 
   /** @ngInject **/
   constructor($scope) {
-    console.log('DarkSkyQueryOptionsCtrl');
-    console.log($scope);
-    console.log(this);
+    console.debug('DarkSkyQueryOptionsCtrl');
   }
 }

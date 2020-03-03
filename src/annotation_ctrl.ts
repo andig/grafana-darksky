@@ -3,8 +3,6 @@ export class DarkSkyAnnotationCtrl {
 
   /** @ngInject **/
   constructor($scope) {
-    console.log('DarkSkyAnnotationCtrl');
-    console.log($scope);
-    console.log(this);
+    console.debug('DarkSkyAnnotationCtrl');
   }
 }

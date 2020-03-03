@@ -7,9 +7,7 @@ export class DarkSkyConfigCtrl {
 
   /** @ngInject **/
   constructor($scope) {
-    console.log("DarkSkyConfigCtrl");
-    console.log($scope);
-    console.log(this);
+    console.debug("DarkSkyConfigCtrl");
 
     this.units = [
       { name: 'SI', value: 'si' },
