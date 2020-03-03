@@ -191,12 +191,6 @@ export class DarkSkyDatasource {
       lon: target.lon,
       lat: target.lat,
     }));
-    if (!isNaN(options.targets[0].lon) && options.targets[0].lon.length > 0) {
-      this.lon = options.targets[0].lon;
-    }
-    if (!isNaN(options.targets[0].lat) && options.targets[0].lat.length > 0) {
-      this.lat = options.targets[0].lat;
-    }
     return options;
   }
 
@@ -209,6 +203,15 @@ export class DarkSkyDatasource {
 
   doRequest(options) {
     // call with pre-defined default options
+    let longi: number;
+    let lati: number;
+    if (options.data.targets) {
+      longi = options.data.targets[0].lon;
+      lati = options.data.targets[0].lat;
+    } else {
+      longi = this.lon;
+      lati = this.lat;
+    }
     const url = `${this.apiUrl}/${this.lat},${this.lon}`;
     return this.backendSrv.datasourceRequest(_.assign({
       url: url,
