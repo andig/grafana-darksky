@@ -73,7 +73,16 @@ export class DarkSkyDatasource {
     }
 
     const apiCalls = this.getApiCalls(query.range, query.maxDataPoints);
-    const url = `${this.apiUrl}/${this.lat},${this.lon}`;
+
+    let longi = this.lon;
+    let lati = this.lat;
+    if (options) {
+      if (options.targets) {
+        longi = options.targets[0].lon;
+        lati = options.targets[0].lat;
+      }
+    }
+    const url = `${this.apiUrl}/${lati},${longi}`;
     const requests = _.map(apiCalls.timestamps, ts => this.doRequest({
       url: `${url},${ts}?${this.apiOptions}`,
       data: query,
@@ -195,7 +204,7 @@ export class DarkSkyDatasource {
   }
 
   testDatasource() {
-    return this.doRequest({}).then(response => (response.status == 200)
+    return this.doRequest({}).then(response => (response.status === 200)
       ? { status: 'success', message: 'Data source is working', title: 'Success' }
       : { status: 'error', message: `Data source returned status ${response.status}`, title: 'Error' }
     );
@@ -203,16 +212,13 @@ export class DarkSkyDatasource {
 
   doRequest(options) {
     // call with pre-defined default options
-    let longi: number;
-    let lati: number;
-    if (options.data.targets) {
-      longi = options.data.targets[0].lon;
-      lati = options.data.targets[0].lat;
-    } else {
-      longi = this.lon;
-      lati = this.lat;
+    let url = `${this.apiUrl}/${this.lon},${this.lat}`;
+    if (options) {
+      if (options.url) {
+        url = options.url;
+      }
     }
-    const url = `${this.apiUrl}/${this.lat},${this.lon}`;
+
     return this.backendSrv.datasourceRequest(_.assign({
       url: url,
       method: 'GET',
