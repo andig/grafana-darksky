@@ -16,13 +16,16 @@ export class DarkSkyDatasource {
   apiUrl: string;
   apiOptions: string;
   metrics: Metric[];
-
+  lat: number;
+  lon: number;
   /** @ngInject **/
   constructor(instanceSettings, private backendSrv, private templateSrv, private $q) {
     this.datasourceName = instanceSettings.name;
 
-    let config = instanceSettings.jsonData;
-    let credentials = `${config.apikey}/${config.lat},${config.lon}`;
+    const config = instanceSettings.jsonData;
+    this.lat = config.lat;
+    this.lon = config.lon;
+    const credentials = `${config.apikey}`;
     this.apiUrl = `/api/datasources/proxy/${instanceSettings.id}/darksky/${credentials}`;
     this.apiOptions = `units=${config.unit}&lang=${config.language}`;
   }
@@ -47,7 +50,7 @@ export class DarkSkyDatasource {
       }, [] as string[]);
 
       this.metrics = _.map(_.uniq(_.sortBy(metrics)), metric => ({
-        text: metric, 
+        text: metric,
         value: metric,
       }));
 
@@ -56,7 +59,7 @@ export class DarkSkyDatasource {
   }
 
   query(options) {
-    var query = this.buildQueryParameters(options);
+    let query = this.buildQueryParameters(options);
     query.targets = query.targets.filter(t => !t.hide);
 
     if (query.targets.length <= 0) {
@@ -69,10 +72,11 @@ export class DarkSkyDatasource {
       query.adhocFilters = [];
     }
 
-    let apiCalls = this.getApiCalls(query.range, query.maxDataPoints);
-    let requests = _.map(apiCalls.timestamps, ts => this.doRequest({
-      url: `${this.apiUrl},${ts}?${this.apiOptions}`,
-      data: query
+    const apiCalls = this.getApiCalls(query.range, query.maxDataPoints);
+    const url = `${this.apiUrl}/${this.lat},${this.lon}`;
+    const requests = _.map(apiCalls.timestamps, ts => this.doRequest({
+      url: `${url},${ts}?${this.apiOptions}`,
+      data: query,
     }));
 
     if (apiCalls.timestamps.length >= 10) {
@@ -90,7 +94,7 @@ export class DarkSkyDatasource {
         }
 
         // select timestamps inside query range
-        data.push(... _.filter(dataset.data, res => {
+        data.push(..._.filter(dataset.data, res => {
           let timeMS = res.time * 1000;
           return timeMS >= query.range.from && timeMS <= query.range.to;
         }));
@@ -183,14 +187,21 @@ export class DarkSkyDatasource {
       target: this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
       refId: target.refId,
       hide: target.hide,
-      type: target.type
+      type: target.type,
+      lon: target.lon,
+      lat: target.lat,
     }));
-
+    if (!isNaN(options.targets[0].lon) && options.targets[0].lon.length > 0) {
+      this.lon = options.targets[0].lon;
+    }
+    if (!isNaN(options.targets[0].lat) && options.targets[0].lat.length > 0) {
+      this.lat = options.targets[0].lat;
+    }
     return options;
   }
 
   testDatasource() {
-    return this.doRequest({}).then(response => (response.status == 200) 
+    return this.doRequest({}).then(response => (response.status == 200)
       ? { status: 'success', message: 'Data source is working', title: 'Success' }
       : { status: 'error', message: `Data source returned status ${response.status}`, title: 'Error' }
     );
@@ -198,8 +209,9 @@ export class DarkSkyDatasource {
 
   doRequest(options) {
     // call with pre-defined default options
+    const url = `${this.apiUrl}/${this.lat},${this.lon}`;
     return this.backendSrv.datasourceRequest(_.assign({
-      url: this.apiUrl,
+      url: url,
       method: 'GET',
     }, options)).then(response => {
       let calls = _.get(response.headers(), 'x-forecast-api-calls');
@@ -211,6 +223,6 @@ export class DarkSkyDatasource {
   }
 
   annotationQuery(options) {
-    return [];
+    throw new Error('Annotation Support not implemented yet.');
   }
 }
