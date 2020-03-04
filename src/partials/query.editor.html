@@ -3,30 +3,29 @@
     <div class="gf-form">
       <label class="gf-form-label width-6 query-keyword">Format as</label>
       <div class="gf-form-select-wrapper">
-        <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.type" ng-options="f.value as f.text for f in ctrl.types"
-          ng-change="ctrl.refresh()"></select>
+        <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.type"
+          ng-options="f.value as f.text for f in ctrl.types" ng-change="ctrl.refresh()"></select>
       </div>
     </div>
-    <div>
+    <div class="gf-form-inline">
       <div class="gf-form">
         <label class="gf-form-label query-keyword width-9">Measurment</label>
-        <gf-form-dropdown class="width-16" model="ctrl.target.target"
-          allow-custom="true"
-          lookup-text="true"
-          get-options="ctrl.getOptions($query)"
-          on-change="ctrl.refresh()">
+        <gf-form-dropdown class="width-16" model="ctrl.target.target" allow-custom="true" lookup-text="true"
+          get-options="ctrl.getOptions($query)" on-change="ctrl.refresh()">
         </gf-form-dropdown>
       </div>
     </div>
-  <div class="gf-form-inline"> 
-    <div class="gf-form">
-      <label class="gf-form-label query-keyword width-6">Latitude</label>
-      <input type="text" class="gf-form-input width-10" ng-model="ctrl.target.lat" spellcheck="false" placeholder="47.1826" ng-blur="ctrl.refresh()">
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-6">Latitude</label>
+        <input type="text" class="gf-form-input width-10" ng-model="ctrl.target.lat" spellcheck="false"
+          placeholder="47.1826" ng-blur="ctrl.refresh()">
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-6">Longitude</label>
+        <input type="text" class="gf-form-input width-10" ng-model="ctrl.target.lon" spellcheck="false"
+          placeholder="9.4440" ng-blur="ctrl.refresh()">
+      </div>
     </div>
-    <div class="gf-form">
-      <label class="gf-form-label query-keyword width-6">Longitude</label>
-      <input type="text" class="gf-form-input width-10" ng-model="ctrl.target.lon" spellcheck="false" placeholder="9.4440" ng-blur="ctrl.refresh()">
-    </div>
-  </div>
   </div>
 </query-editor-row>
