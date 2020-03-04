@@ -32,11 +32,11 @@ Example configuration:
 
 Using Docker:
 
-1. Clone the repo
+1. Clone the repo and cd into the folder grafana-darksky
 1. make sure you have [yarn](https://yarnpkg.com/) installed
 1. install the project dependencies: `yarn install`
 1. Start the watch task with yarn: `yarn watch`
-1. run the docker from the docker compose file with: `docker-compose up -d --build`
+1. run the docker from the docker compose file with: `docker-compose -f "docker-compose.yml" up -d --build`
 1. Open grafana at http://localhost:3000
 1. Login with "admin" and password "admin"
 1. Now you can get started
