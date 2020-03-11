@@ -1,3 +1,4 @@
-/node_modules
-
+node_modules/
+npm-debug.log
 darksky.code-workspace
+yarn-error.log

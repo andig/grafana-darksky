@@ -25,6 +25,18 @@ Example configuration:
 ## Frequently asked questions
 
 1. I've selected a metric- why does it not appear at certain zoom levels?
-   
+
    The DarkSky API offers different data nodes, e.g. hourly and daily data. Not all metrics are available on all levels. During selection, this datasource offers all metrics available on any level of DarkSky data. If in doubt which metric to choose please take a look at the raw DarkSky API response.
-   
+
+## Development
+
+Using Docker:
+
+1. Clone the repo and cd into the folder grafana-darksky
+1. make sure you have [yarn](https://yarnpkg.com/) installed
+1. install the project dependencies: `yarn install`
+1. Start the watch task with yarn: `yarn watch`
+1. run the docker from the docker compose file with: `docker-compose -f "docker-compose.yml" up -d --build`
+1. Open grafana at http://localhost:3000
+1. Login with "admin" and password "admin"
+1. Now you can get started
