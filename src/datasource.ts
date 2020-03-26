@@ -1,14 +1,14 @@
-import _ from "lodash";
+import _ from 'lodash';
 
 type ApiCallDefinition = {
   dataset: string,
-  timestamps: Array<number>
-}
+  timestamps: number[],
+};
 
 type Metric = {
   text: string,
-  value: string
-}
+  value: string,
+};
 
 export class DarkSkyDatasource {
 
@@ -35,18 +35,19 @@ export class DarkSkyDatasource {
     if (this.metrics) {
       return this.metrics;
     }
-
     return this.doRequest({
-      data: query
-    }).then(res => {
+      query,
+      url: `${this.apiUrl}/${this.lat}, ${this.lon}`,
+      method: 'GET',
+    }).then((res: any) => {
       // get all properties from forecast query
       const datasets = ['currently', /*'minutely',*/ 'hourly', 'daily'];
-      let metrics = _.transform(datasets, (metrics, dataset) => {
+      const metrics = _.transform(datasets, (metrics, dataset) => {
         let props = res.data[dataset];
         if (props && _.isArray(props.data)) {
           props = props.data.length ? props.data[0] : {};
         }
-        metrics.push(... _.filter(_.keys(props), key => key != 'time'));
+        metrics.push(..._.filter(_.keys(props), key => key !== 'time'));
       }, [] as string[]);
 
       this.metrics = _.map(_.uniq(_.sortBy(metrics)), metric => ({
@@ -84,33 +85,34 @@ export class DarkSkyDatasource {
     }
     const url = `${this.apiUrl}/${lati},${longi}`;
     const requests = _.map(apiCalls.timestamps, ts => this.doRequest({
+      query,
       url: `${url},${ts}?${this.apiOptions}`,
-      data: query,
+      method: 'GET',
     }));
 
     if (apiCalls.timestamps.length >= 10) {
       console.warn(`DarkSky will execute ${apiCalls.timestamps.length} api.`);
     }
 
-    return Promise.all(requests).then(response => {
+    return Promise.all(requests).then((response: any) => {
       // extraxt data from json result structure
       let data = _.transform(response, (data, res) => {
         // select currently datapoint
-        let dataset = _.get(res, `data.${apiCalls.dataset}`);
-        if (apiCalls.dataset == 'currently') {
+        const dataset = _.get(res, `data.${apiCalls.dataset}`);
+        if (apiCalls.dataset === 'currently') {
           data.push(dataset);
           return;
         }
 
         // select timestamps inside query range
-        data.push(..._.filter(dataset.data, res => {
-          let timeMS = res.time * 1000;
+        data.push(..._.filter(dataset.data, (res: any) => {
+          const timeMS = res.time * 1000;
           return timeMS >= query.range.from && timeMS <= query.range.to;
         }));
       }, [] as any[]);
 
       // sort by timestamp
-      data = _.sortBy(data, 'time')
+      data = _.sortBy(data, 'time');
 
       // table query?
       return (_.filter(query.targets, { type: 'table' }).length)
@@ -121,20 +123,20 @@ export class DarkSkyDatasource {
 
   getApiCalls(range, maxDataPoints): ApiCallDefinition {
     let dataset = 'hourly', step = 1;
-    let hours = range.to.diff(range.from, 'hours');
+    const hours = range.to.diff(range.from, 'hours');
 
-    let date = range.from.clone().startOf('day');
-    let timestamps: any[] = [date.unix()];
+    const date = range.from.clone().startOf('day');
+    const timestamps: any[] = [date.unix()];
 
     // not same day?
     if (range.to.date() !== range.from.date()) {
       if (hours > 7 * 24) { // daily queries - daily
         dataset = 'daily';
         if (maxDataPoints) { // limit number of queries
-          let days = range.to.diff(range.from, 'days');
+          const days = range.to.diff(range.from, 'days');
           step = Math.max(step, Math.floor(days / maxDataPoints));
         }
-      };
+      }
 
       // create one timestamp per additional day
       date.add(step, 'day');
@@ -147,43 +149,43 @@ export class DarkSkyDatasource {
     return {
       dataset: dataset,
       timestamps: timestamps,
-    }
+    };
   }
 
   tableResponse(targets, data) {
     // use first metric for table query
     let timeframe = targets[0].target;
 
-    let columns = _.map(_.head(data) as any, (val, key) => ({
+    const columns = _.map(_.head(data) as any, (val, key) => ({
       text: key,
-      type: (key.match(/[Tt]ime/)) ? 'time' : (typeof (val) === 'string' ? 'string' : 'number')
+      type: (key.match(/[Tt]ime/)) ? 'time' : (typeof (val) === 'string' ? 'string' : 'number'),
     }));
 
-    let rows = _.map(data, row => {
-      return _.map(columns as any[], col => {
+    const rows = _.map(data, (row: any) => {
+      return _.map(columns as any[], (col: any) => {
         if (row[col.text] === undefined) return null;
 
         // time to millisec
-        return col.type == 'time' ? row[col.text] * 1000 : row[col.text];
-      })
+        return col.type === 'time' ? row[col.text] * 1000 : row[col.text];
+      });
     });
 
     return {
       data: [{
-        type: "table",
+        type: 'table',
         columns: columns,
         rows: rows,
-      }]
+      }],
     };
   }
 
   timeseriesResponse(targets, data) {
-    let res = {
+    const res = {
       data: _.map(targets, target => ({
         target: target.target,
         datapoints: _.map(data, d => [d[target.target], d.time * 1000]),
-      }))
-    }
+      })),
+    };
 
     return res;
   }
@@ -212,20 +214,28 @@ export class DarkSkyDatasource {
 
   doRequest(options) {
     // call with pre-defined default options
-    let url = `${this.apiUrl}/${this.lon},${this.lat}`;
+    const url = `${this.apiUrl}/${this.lat}, ${this.lon}`;
     if (options) {
-      if (options.url) {
-        url = options.url;
+      if (!options.url) {
+        console.log('set default url, since no url is given');
+        options.url = url;
       }
     }
-
-    return this.backendSrv.datasourceRequest(_.assign({
-      url: url,
-      method: 'GET',
-    }, options)).then(response => {
-      let calls = _.get(response.headers(), 'x-forecast-api-calls');
-      if (calls > 400) {
-        console.warn(`DarkSky noticed you've already executed ${calls} api calls. Free limit is 1000.`);
+    return this.backendSrv.datasourceRequest(options).then((response: any) => {
+      let resHeaders = _.get(response, 'headers');
+      if (!resHeaders) {
+        console.warn('No headers found!');
+      } else {
+        let calls = 0;
+        if (typeof resHeaders === 'function') {
+          resHeaders = resHeaders();
+          calls = _.get(resHeaders, 'x-forecast-api-calls');
+        } else {
+          calls = resHeaders.get('x-forecast-api-calls');
+        }
+        if (calls > 600) {
+          console.warn(`DarkSky noticed you've already executed ${calls} api calls. Free limit is 1000.`);
+        }
       }
       return response;
     });
