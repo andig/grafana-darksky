@@ -1,13 +1,13 @@
 export class DarkSkyConfigCtrl {
   static templateUrl = 'partials/config.html';
-  
+
   current: any;
-  private units: {name:string, value:string}[];
+  private units: { name: string, value: string }[];
   private languages: { name: string, value: string }[];
 
   /** @ngInject **/
   constructor($scope) {
-    console.debug("DarkSkyConfigCtrl");
+    console.debug('DarkSkyConfigCtrl');
 
     this.units = [
       { name: 'SI', value: 'si' },
@@ -56,7 +56,7 @@ export class DarkSkyConfigCtrl {
       { name: 'Tetum', value: 'tet' },
       { name: 'Turkish', value: 'tr' },
       { name: 'Ukrainian', value: 'uk' },
-      { name: 'Chinese', value: 'zh' }
+      { name: 'Chinese', value: 'zh' },
     ];
 
     this.current.jsonData.unit = this.current.jsonData.unit || 'si';
