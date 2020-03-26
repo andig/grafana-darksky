@@ -154,7 +154,6 @@ export class DarkSkyDatasource {
 
   tableResponse(targets, data) {
     // use first metric for table query
-    let timeframe = targets[0].target;
 
     const columns = _.map(_.head(data) as any, (val, key) => ({
       text: key,
@@ -208,7 +207,7 @@ export class DarkSkyDatasource {
   testDatasource() {
     return this.doRequest({}).then(response => (response.status === 200)
       ? { status: 'success', message: 'Data source is working', title: 'Success' }
-      : { status: 'error', message: `Data source returned status ${response.status}`, title: 'Error' }
+      : { status: 'error', message: `Data source returned status ${response.status}`, title: 'Error' },
     );
   }
 
