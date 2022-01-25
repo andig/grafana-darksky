@@ -37,7 +37,7 @@ export class DarkSkyDatasource {
     }
     return this.doRequest({
       query,
-      url: `${this.apiUrl}/${this.lat}, ${this.lon}`,
+      url: `${this.apiUrl}/${this.lat},${this.lon}`,
       method: 'GET',
     }).then((res: any) => {
       // get all properties from forecast query
